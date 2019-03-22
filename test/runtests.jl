@@ -1,6 +1,7 @@
-using YaoWave
+using YaoExperiment
 using Test
 
-@testset "YaoWave.jl" begin
-    # Write your own tests here.
+@testset "YaoExperiment.jl" begin
+    include("timer.jl")
+    include("ConditionBlock.jl")
 end

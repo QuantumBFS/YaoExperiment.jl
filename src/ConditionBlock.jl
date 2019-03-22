@@ -1,8 +1,3 @@
-using Yao
-using Yao.Blocks
-import Yao.Blocks: subblocks, chsubblocks, apply!, mat, print_block, print_subblocks
-using Yao.Blocks: print_prefix, print_tree
-
 struct ConditionBlock{N, T, BTT<:MatrixBlock{N}, BTF<:MatrixBlock{N}} <: CompositeBlock{N, T}
     m::Measure
     block_true::BTT
@@ -65,14 +60,4 @@ function print_subblocks(io::IO, tree::ConditionBlock, depth, charset, active_le
     )
     print_prefix(io, depth, charset, active_levels)
     println(io, "end")
-end
-
-using Test
-@testset "condition, t1, t2" begin
-    m = Measure()
-    reg = register(ComplexF64[0,1])
-    c = condition(m, X, nothing)
-    @test_throws UndefRefError reg |> c
-    reg |> m
-    @test (measure(reg |> c; nshot=10) .== 0) |> all
 end

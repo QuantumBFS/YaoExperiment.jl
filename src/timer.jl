@@ -1,16 +1,3 @@
-using Yao
-using Yao.Blocks
-import Yao.Blocks: subblocks, chsubblocks, apply!, mat, print_block, print_subblocks, usedbits
-using Yao.Blocks: print_prefix, print_tree, print_block
-using LuxurySparse
-
-using QuAlgorithmZoo
-using Symbolics
-
-# patch identity bits
-usedbits(::I2Gate) = []
-usedbits(p::PutBlock) = [p.addrs[usedbits(p.block)]...]
-
 const GROUPA = Union{ChainBlock, PutBlock, Concentrator, AbstractDiff, CachedBlock}
 const GROUPB = Union{Roller, KronBlock, PauliString}
 gatetime(::Val, c::GROUPA) = sum(gatetime, c |> subblocks)
@@ -47,24 +34,7 @@ function gatecount!(c::Union{PrimitiveBlock, Daggered, ControlBlock}, storage::A
     storage
 end
 
-struct Delay{N, T} <: PrimitiveBlock{N, Bool}
-    t::T
-    Delay{N}(t::T) where {N,T} = new{N, T}(t)
-end
-
-mat(d::Delay{N}) where N = IMatrix{1<<N}()
-apply!(reg::DefaultRegister, d::Delay) = reg
-gatecount!(c::Delay, storage::AbstractDict) = storage
+gatecount!(c::TrivilGate, storage::AbstractDict) = storage
 gatetime(::Val, d::Delay) = d.t
 gatetime(::Val{:Sym}, d::Delay) = d.t
 print_block(io::IO, d::Delay) = print(io, "Delay → $(d.t)")
-
-using Test
-@testset "gate count, time" begin
-    qc = QFTCircuit(3)
-    @test qc |> gatecount |> length == 2
-    @test qc |> gatecount |> values |> sum == 6
-    @sym T1 T2
-    ex = chain(qc, Delay{3}(0.1)) |> gatetime
-    @test ex(T1=>1)(T2=>10) |> simplify == 33.1
-end

@@ -1,8 +1,8 @@
-# YaoWave.jl
+# YaoExperiment.jl
 
 ```@index
 ```
 
 ```@autodocs
-Modules = [YaoWave]
+Modules = [YaoExperiment]
 ```

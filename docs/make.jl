@@ -1,17 +1,17 @@
-using Documenter, YaoWave
+using Documenter, YaoExperiment
 
 makedocs(;
-    modules=[YaoWave],
+    modules=[YaoExperiment],
     format=Documenter.HTML(),
     pages=[
         "Home" => "index.md",
     ],
-    repo="https://github.com/GiggleLiu/YaoWave.jl/blob/{commit}{path}#L{line}",
-    sitename="YaoWave.jl",
+    repo="https://github.com/GiggleLiu/YaoExperiment.jl/blob/{commit}{path}#L{line}",
+    sitename="YaoExperiment.jl",
     authors="JinGuo Liu",
     assets=[],
 )
 
 deploydocs(;
-    repo="github.com/GiggleLiu/YaoWave.jl",
+    repo="github.com/GiggleLiu/YaoExperiment.jl",
 )

@@ -1,7 +1,12 @@
-name = "YaoWave"
-uuid = "03de0c60-7835-501c-93ad-24020a64001e"
+name = "YaoExperiment"
+uuid = "76a71f48-d2f1-54d8-99b8-7ad8a04864f5"
 authors = ["GiggleLiu <cacate0129@gmail.com>"]
 version = "0.1.0"
+
+[deps]
+LuxurySparse = "d05aeea4-b7d4-55ac-b691-9e7fabb07ba2"
+Symbolics = "6ab9bfca-32f0-5769-8e9c-ef83b29e602a"
+Yao = "5872b779-8223-5990-8dd0-5abbb0748c8c"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
