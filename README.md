@@ -1,4 +1,6 @@
-# YaoWave
+# YaoExperiment.jl
+
+Gate Couting, Timming and Compiling stuff.
 
 [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://GiggleLiu.github.io/YaoWave.jl/stable)
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://GiggleLiu.github.io/YaoWave.jl/dev)

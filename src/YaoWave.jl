@@ -1,5 +1,5 @@
 module YaoWave
 
-greet() = print("Hello World!")
+include("WaveReg.jl")
 
 end # module
