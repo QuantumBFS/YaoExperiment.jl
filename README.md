@@ -61,7 +61,10 @@ CPHASE(1.5707963267948966) 2 1
 H 2
 ```
 
+For web communication part, see `web/`.
+
 ## TODO
+#### Decode QUIL for Porting Real Device
 #### Optimize Appearence of Symbolic Calculation
 Symbolic calculations are based on the following package
 https://github.com/MasonProtter/Symbolics.jl
