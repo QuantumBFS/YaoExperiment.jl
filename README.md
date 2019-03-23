@@ -1,6 +1,11 @@
 # YaoExperiment
+[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://GiggleLiu.github.io/YaoExperiment.jl/stable)
+[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://GiggleLiu.github.io/YaoExperiment.jl/dev)
+[![Build Status](https://travis-ci.com/GiggleLiu/YaoExperiment.jl.svg?branch=master)](https://travis-ci.com/GiggleLiu/YaoExperiment.jl)
+[![Codecov](https://codecov.io/gh/GiggleLiu/YaoExperiment.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/GiggleLiu/YaoExperiment.jl)
 
-![#f03c15](https://placehold.it/15/f03c15/000000?text=+)![#f03c15](https://placehold.it/15/f03c15/000000?text=+)![#f03c15](https://placehold.it/15/f03c15/000000?text=+)WIP![#f03c15](https://placehold.it/15/f03c15/000000?text=+)![#f03c15](https://placehold.it/15/f03c15/000000?text=+)![#f03c15](https://placehold.it/15/f03c15/000000?text=+)
+
+![#f03c15](https://placehold.it/15/f03c15/000000?text=+)![#f03c15](https://placehold.it/15/f03c15/000000?text=+)![#f03c15](https://placehold.it/15/f03c15/000000?text=+) Work in progress ![#f03c15](https://placehold.it/15/f03c15/000000?text=+)![#f03c15](https://placehold.it/15/f03c15/000000?text=+)![#f03c15](https://placehold.it/15/f03c15/000000?text=+)
 
 Experimental utilities
 * Gate Count
@@ -10,11 +15,6 @@ Experimental utilities
 
 Possiblly will support
 * Wave Editing (for Quantum Control)
-
-[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://GiggleLiu.github.io/YaoExperiment.jl/stable)
-[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://GiggleLiu.github.io/YaoExperiment.jl/dev)
-[![Build Status](https://travis-ci.com/GiggleLiu/YaoExperiment.jl.svg?branch=master)](https://travis-ci.com/GiggleLiu/YaoExperiment.jl)
-[![Codecov](https://codecov.io/gh/GiggleLiu/YaoExperiment.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/GiggleLiu/YaoExperiment.jl)
 
 ## Examples
 #### 1. count gates and estimate experimental run time
@@ -69,10 +69,7 @@ H 2
 For web communication part, see `web/`.
 
 ## TODO
-#### Decode QUIL for Porting Real Device
-#### Optimize Appearence of Symbolic Calculation
-Symbolic calculations are based on the following package
-https://github.com/MasonProtter/Symbolics.jl
+* Decode QUIL for Porting Real Device.
+* Optimize Appearence of Symbolic Calculation.
+Symbolic calculations are based on [Symbolics](https://github.com/MasonProtter/Symbolics.jl), fixing this [issue](https://github.com/MasonProtter/Symbolics.jl/issues/17) may give better appearence of formulas
 
-Fixing the following issue may give better appearence of formulas
-https://github.com/MasonProtter/Symbolics.jl/issues/17
