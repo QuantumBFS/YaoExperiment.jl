@@ -5,7 +5,10 @@
 Experimental utilities
 * Gate Count
 * Time Estimation
-* QASM Compiling
+* Compiling to QUIL
+* Web Communication
+
+Possiblly will support
 * Wave Editing (for Quantum Control)
 
 [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://GiggleLiu.github.io/YaoExperiment.jl/stable)
