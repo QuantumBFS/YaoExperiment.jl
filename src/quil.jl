@@ -1,8 +1,3 @@
-using Yao
-using Yao.Blocks
-
-# NOTE: give up support to roller
-
 mutable struct QuilInfo{VT<:Vector}
     address_map::VT
 end
@@ -50,7 +45,13 @@ end
 quil(blk::I2Gate, info::QuilInfo) = "I"
 
 quil(blk::RotationGate, info::QuilInfo) = "R$(quil(blk.block, info))($(blk.theta))"
-quil(blk::ControlBlock, info::QuilInfo) = "C"^length(blk.ctrl_qubits) * quil(blk.block, info) > (blk.ctrl_qubits..., blk.addrs...)/info
+quil(blk::RotationGate{<:Any, <:Any, <:SWAPGate}, info::QuilInfo) = "P$(quil(blk.block, info))($(blk.theta))"  # @
+quil(blk::ShiftGate, info::QuilInfo) = "PHASE($(blk.theta))"
+_cstring(blk::ControlBlock) = prod(v==1 ? "C" : "¬C" for v in blk.vals)
+function quil(blk::ControlBlock, info::QuilInfo)
+    _cstring(blk) * quil(blk.block, info) > (blk.ctrl_qubits..., blk.addrs...)/info
+end
+quil(blk::ControlBlock{<:Any, <:XGate}, info::QuilInfo) = _cstring(blk) * "NOT" > (blk.ctrl_qubits..., blk.addrs...)/info  # @
 function quil(blk::Concentrator, info::QuilInfo)
     info = copy(info)
     info.address_map = info.address_map[blk.usedbits]
@@ -62,8 +63,18 @@ function quil(blk::Union{ChainBlock, Sequential}, info::QuilInfo)
 end
 
 # TODO:
-# Basic Elemental Gates
-# u1 == z
-# u3, u2,
-# cu1, cu3
+#
+# QUIL: https://github.com/rigetti/pyquil/blob/master/pyquil/gates.py
+# Quantum ->
+# CPHASE00 -> diag([exp(1j*phi), 1, 1, 1])
+# CPHASE01 -> diag([1, exp(1j*phi), 1, 1])
+# CPHASE10 -> diag([1, 1, exp(1j*phi), 1])
+# ISWAP -> [1000; 00i0; 0i00; 0001]
+#
+# CLASSICAL ->
+# WAIT, NOP, HALT, RESET
+# TRUE, FALSE, NEG, NOT, AND, OR, IOR, XOR, MOVE, EXCHANGE, LOAD, STORE, CONVERT, ADD, SUB, MUL, DIV, EQ, LT, LE, GT, GE
+#
 # if statement
+
+# NOTE: give up support to roller

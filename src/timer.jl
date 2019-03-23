@@ -35,6 +35,6 @@ function gatecount!(c::Union{PrimitiveBlock, Daggered, ControlBlock}, storage::A
 end
 
 gatecount!(c::TrivilGate, storage::AbstractDict) = storage
-gatetime(::Val, d::Delay) = d.t
-gatetime(::Val{:Sym}, d::Delay) = d.t
-print_block(io::IO, d::Delay) = print(io, "Delay → $(d.t)")
+gatetime(::Val, d::Wait) = d.t
+gatetime(::Val{:Sym}, d::Wait) = d.t
+print_block(io::IO, d::Wait) = print(io, "Wait → $(d.t)")

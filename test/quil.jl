@@ -1,4 +1,4 @@
-using YaoExperiment.QASM
+using YaoExperiment
 using Yao, Yao.Blocks
 using Test
 
@@ -23,8 +23,9 @@ end
 # ccx, ccy, ccz, cch, cct
 @testset "basic controled gates" begin
     for G in [:X, :Y, :Z, :H, :T]
-        g = string(G)
+        g = G == :X ? "NOT" : string(G)
         @eval @test quil(control(3, 1, 2=>$G)) == "C$($g) 0 1"
+        @eval @test quil(control(3, -1, 2=>$G)) == "¬C$($g) 0 1"
         @eval @test quil(control(7, (1,3), 2=>$G)) == "CC$($g) 0 2 1"
     end
 end
@@ -38,6 +39,8 @@ end
         @eval @test quil(rot($G, 0.3)) == "R$($g)(0.3)"
         @eval @test quil(put(3, 2=>rot($G, 0.3))) == "R$($g)(0.3) 1"
     end
+    @test quil(rot(SWAP, 0.3)) == "PSWAP(0.3)"
+    @test quil(put(3, (3,1)=>rot(SWAP, 0.3))) == "PSWAP(0.3) 2 0"
 end
 
 # measure
@@ -62,5 +65,5 @@ end
 
 @testset "show" begin
     # show
-    @test repr(MIME("quil"), control(3, 2, 1=>X)) |> String == "CX 1 0\n"
+    @test repr(MIME("quil"), control(3, 2, 1=>X)) |> String == "CNOT 1 0\n"
 end
