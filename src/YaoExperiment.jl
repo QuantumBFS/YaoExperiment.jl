@@ -11,5 +11,6 @@ include("YaoPatch.jl")
 include("TrivilGate.jl")
 include("timer.jl")
 include("ConditionBlock.jl")
+include("QASM/QASM.jl")
 
 end # module

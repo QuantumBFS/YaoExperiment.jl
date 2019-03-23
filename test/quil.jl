@@ -1,4 +1,5 @@
 using YaoExperiment.QASM
+using Yao, Yao.Blocks
 using Test
 
 # x, y, z, h, s, sdag, t, tdag
@@ -40,21 +41,26 @@ end
 end
 
 # measure
-@eval @test quil(MEASURE, QASMInfo([1,4,3])) == "MEASURE 0 3 2"
-@eval @test quil(MEASURE_REMOVE, QASMInfo([1,4,3])) == "MEASURE 0 3 2"
-@eval @test quil(MEASURE_RESET, QASMInfo([1,4,3])) == "MEASURE_AND_RESET(0) 0 3 2"
+@testset "measure" begin
+    @eval @test quil(MEASURE, QuilInfo([1,4,3])) == "MEASURE 0 3 2"
+    @eval @test quil(MEASURE_REMOVE, QuilInfo([1,4,3])) == "MEASURE 0 3 2"
+    @eval @test quil(MEASURE_RESET, QuilInfo([1,4,3])) == "MEASURE_AND_RESET(0) 0 3 2"
+end
 
-# kron
-@test quil(kron(5, 2=>X, 4=>T)) == "X 1\nT 3"
-@test quil(paulistring(4, I2, I2, X, X)) == "X 2\nX 3"
-# chain
-@test quil(chain(put(3,1=>Z), put(3, 2=>X))) == "Z 0\nX 1"
-# Concentrator
-@test quil(concentrate(5, put(3,1=>Z), [3,4,1])) == "Z 2"
-# cache and diff
-@test quil(kron(5, 2=>X, 4=>T) |> cache) == "X 1\nT 3"
-@test quil(rot(X, 0.3) |> Yao.Blocks.QDiff) == "RX(0.3)"
+@testset "composite" begin
+    # kron
+    @test quil(kron(5, 2=>X, 4=>T)) == "X 1\nT 3"
+    @test quil(paulistring(4, I2, I2, X, X)) == "X 2\nX 3"
+    # chain
+    @test quil(chain(put(3,1=>Z), put(3, 2=>X))) == "Z 0\nX 1"
+    # Concentrator
+    @test quil(concentrate(5, put(3,1=>Z), [3,4,1])) == "Z 2"
+    # cache and diff
+    @test quil(kron(5, 2=>X, 4=>T) |> cache) == "X 1\nT 3"
+    @test quil(rot(X, 0.3) |> Yao.Blocks.QDiff) == "RX(0.3)"
+end
 
-# show
-@test repr(MIME("quil/quil"), control(3, 2, 1=>X)) |> String == "CX 1 0\n"
-
+@testset "show" begin
+    # show
+    @test repr(MIME("quil"), control(3, 2, 1=>X)) |> String == "CX 1 0\n"
+end
