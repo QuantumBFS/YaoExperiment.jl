@@ -1,4 +1,4 @@
-abstract type TrivilGate{N} <: PrimitiveBlock{N, Bool} end
+abstract type TrivilGate{N} <: PrimitiveBlock{N} end
 
 mat(d::TrivilGate{N}) where N = IMatrix{1<<N}()
 apply!(reg::DefaultRegister, d::TrivilGate) = reg

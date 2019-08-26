@@ -1,9 +1,8 @@
 module YaoExperiment
-using Yao
-using Yao.Blocks
-import Yao.Blocks: subblocks, chsubblocks, apply!, mat, print_block, print_subblocks, usedbits, print_prefix, print_tree
+using Yao, QuAlgorithmZoo
+import Yao: subblocks, chsubblocks, apply!, mat, print_block, print_tree
+using Yao.ConstGate
 using LuxurySparse
-
 using Symbolics
 
 export gatecount, gatetime, ConditionBlock, TrivilGate, Wait, condition

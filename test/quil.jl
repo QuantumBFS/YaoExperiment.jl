@@ -1,5 +1,6 @@
 using YaoExperiment
-using Yao, Yao.Blocks
+using Yao, Yao.ConstGate
+using QuAlgorithmZoo
 using Test
 
 # x, y, z, h, s, sdag, t, tdag
@@ -45,25 +46,28 @@ end
 
 # measure
 @testset "measure" begin
-    @eval @test quil(MEASURE, QuilInfo([1,4,3])) == "MEASURE 0 3 2"
-    @eval @test quil(MEASURE_REMOVE, QuilInfo([1,4,3])) == "MEASURE 0 3 2"
-    @eval @test quil(MEASURE_RESET, QuilInfo([1,4,3])) == "MEASURE_AND_RESET(0) 0 3 2"
+    @test quil(Measure(3), QuilInfo([1,4,3])) == "MEASURE 0 3 2"
 end
 
 @testset "composite" begin
     # kron
     @test quil(kron(5, 2=>X, 4=>T)) == "X 1\nT 3"
-    @test quil(paulistring(4, I2, I2, X, X)) == "X 2\nX 3"
+    @test quil(PauliString(I2, I2, X, X)) == "X 2\nX 3"
     # chain
     @test quil(chain(put(3,1=>Z), put(3, 2=>X))) == "Z 0\nX 1"
     # Concentrator
     @test quil(concentrate(5, put(3,1=>Z), [3,4,1])) == "Z 2"
     # cache and diff
     @test quil(kron(5, 2=>X, 4=>T) |> cache) == "X 1\nT 3"
-    @test quil(rot(X, 0.3) |> Yao.Blocks.QDiff) == "RX(0.3)"
+    @test quil(rot(X, 0.3) |> Diff) == "RX(0.3)"
 end
 
 @testset "show" begin
     # show
     @test repr(MIME("quil"), control(3, 2, 1=>X)) |> String == "CNOT 1 0\n"
+end
+
+@testset "system test" begin
+    circuit = chain(QFTCircuit(4), Measure())
+    println(quil(circuit))
 end

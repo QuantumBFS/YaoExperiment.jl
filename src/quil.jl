@@ -9,7 +9,7 @@ function Base.show(io::IO, ::MIME"quil", blk::AbstractBlock)
     println(io, qcode)
 end
 quil(blk::AbstractBlock, N::Union{Nothing, Int}=nothing) = quil(blk, QuilInfo(collect(1:(N isa Nothing ? nqubits(blk) : N))))
-quil(blk::Union{AbstractDiff, CachedBlock}, info::QuilInfo) = quil(blk |> parent, info)
+quil(blk::Union{Diff, CachedBlock}, info::QuilInfo) = quil(blk |> parent, info)
 
 ######################## Basic Buiding Blocks ########################
 const BASIC_GATES = [:X, :Y, :Z, :H, :S, :Sdag, :T, :Tdag, :SWAP, :CNOT]
@@ -22,20 +22,32 @@ import Base: >, /
 >(gate::String, locs) = gate * " " * locs2str(locs)
 /(locs, info::QuilInfo) = [info.address_map[loc] for loc in locs]
 
-quil(blk::Measure, info::QuilInfo) = "MEASURE" > info.address_map
-quil(blk::MeasureAndRemove, info::QuilInfo) = "MEASURE" > info.address_map
-quil(blk::MeasureAndReset, info::QuilInfo) = "MEASURE_AND_RESET($(blk.val))" > info.address_map
-quil(blk::PutBlock, info::QuilInfo) = quil(blk.block, info) > blk.addrs/info
+function quil(blk::Measure{N,K,ComputationalBasis}, info::QuilInfo) where {N, K}
+    if !(blk.collapseto isa Nothing)
+        return "MEASURE_AND_RESET($(blk.val))" > info.address_map[blk.locations]
+    elseif !(blk.remove)
+        if N == K
+            locs = 1:N
+        else
+            locs = blk.locations
+        end
+        return "MEASURE" > info.address_map[locs]
+    else
+        error("unable to parse $blk")
+    end
+end
+quil(blk::PutBlock, info::QuilInfo) = quil(content(blk), info) > blk.locs/info
 function quil(blk::Union{KronBlock, PauliString}, info::QuilInfo)
+    locs = blk isa PauliString ? (1:nqubits(blk)) : blk.locs
     qs = String[]
-    for (g, loc) in zip(blk.blocks, blk |> addrs)
+    for (g, loc) in zip(subblocks(blk), locs)
         if !(g isa I2Gate)
             push!(qs, quil(g, info) > loc/info)
         end
     end
     join(qs, "\n")
 end
-quil(blk::RepeatedBlock, info::QuilInfo) = join([quil(blk.block, info) > loc/info for loc in blk.addrs], "\n")
+quil(blk::RepeatedBlock, info::QuilInfo) = join([quil(content(blk), info) > loc/info for loc in blk.locs], "\n")
 
 for G in BASIC_GATES
     GT = Symbol(G, :Gate)
@@ -44,18 +56,18 @@ for G in BASIC_GATES
 end
 quil(blk::I2Gate, info::QuilInfo) = "I"
 
-quil(blk::RotationGate, info::QuilInfo) = "R$(quil(blk.block, info))($(blk.theta))"
-quil(blk::RotationGate{<:Any, <:Any, <:SWAPGate}, info::QuilInfo) = "P$(quil(blk.block, info))($(blk.theta))"  # @
+quil(blk::RotationGate{N,T}, info::QuilInfo) where {N,T} = "R$(quil(content(blk), info))($(blk.theta))"
+quil(blk::RotationGate{N,T,G}, info::QuilInfo) where {N,T,G<:SWAPGate} = "P$(quil(content(blk), info))($(blk.theta))"  # @
 quil(blk::ShiftGate, info::QuilInfo) = "PHASE($(blk.theta))"
-_cstring(blk::ControlBlock) = prod(v==1 ? "C" : "¬C" for v in blk.vals)
+_cstring(blk::ControlBlock) = prod(v==1 ? "C" : "¬C" for v in blk.ctrl_config)
 function quil(blk::ControlBlock, info::QuilInfo)
-    _cstring(blk) * quil(blk.block, info) > (blk.ctrl_qubits..., blk.addrs...)/info
+    _cstring(blk) * quil(content(blk), info) > (blk.ctrl_locs..., blk.locs...)/info
 end
-quil(blk::ControlBlock{<:Any, <:XGate}, info::QuilInfo) = _cstring(blk) * "NOT" > (blk.ctrl_qubits..., blk.addrs...)/info  # @
+quil(blk::ControlBlock{<:Any, <:XGate}, info::QuilInfo) = _cstring(blk) * "NOT" > (blk.ctrl_locs..., blk.locs...)/info  # @
 function quil(blk::Concentrator, info::QuilInfo)
     info = copy(info)
-    info.address_map = info.address_map[blk.usedbits]
-    quil(blk.block, info)
+    info.address_map = info.address_map[[blk.locs...]]
+    quil(content(blk), info)
 end
 
 function quil(blk::Union{ChainBlock, Sequential}, info::QuilInfo)
