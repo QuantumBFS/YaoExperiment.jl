@@ -5,8 +5,13 @@ version = "0.1.0"
 
 [deps]
 LuxurySparse = "d05aeea4-b7d4-55ac-b691-9e7fabb07ba2"
-Symbolics = "6ab9bfca-32f0-5769-8e9c-ef83b29e602a"
 Yao = "5872b779-8223-5990-8dd0-5abbb0748c8c"
+YaoExtensions = "7a06699c-c960-11e9-3c98-9f78548b5f0f"
+
+[compat]
+LuxurySparse = "0.5"
+Yao = "0.6"
+julia = "1"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"

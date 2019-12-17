@@ -1,7 +1,6 @@
 using YaoExperiment
 using Test
 
-@testset "YaoExperiment.jl" begin
-    include("ConditionBlock.jl")
+@testset "quil" begin
     include("quil.jl")
 end

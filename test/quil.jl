@@ -1,6 +1,5 @@
 using YaoExperiment
-using Yao, Yao.ConstGate
-using QuAlgorithmZoo
+using Yao, Yao.ConstGate, YaoExtensions
 using Test
 
 # x, y, z, h, s, sdag, t, tdag
@@ -46,7 +45,7 @@ end
 
 # measure
 @testset "measure" begin
-    @test quil(Measure(3), QuilInfo([1,4,3])) == "MEASURE 0 3 2"
+    @test quil(Measure(3), YaoExperiment.QuilAddress([1,4,3])) == "MEASURE 0 3 2"
 end
 
 @testset "composite" begin
@@ -59,7 +58,7 @@ end
     @test quil(concentrate(5, put(3,1=>Z), [3,4,1])) == "Z 2"
     # cache and diff
     @test quil(kron(5, 2=>X, 4=>T) |> cache) == "X 1\nT 3"
-    @test quil(rot(X, 0.3) |> Diff) == "RX(0.3)"
+    @test quil(rot(X, 0.3)) == "RX(0.3)"
 end
 
 @testset "show" begin
@@ -68,6 +67,6 @@ end
 end
 
 @testset "system test" begin
-    circuit = chain(QFTCircuit(4), Measure())
+    circuit = chain(qft_circuit(4), Measure())
     println(quil(circuit))
 end

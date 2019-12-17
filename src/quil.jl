@@ -1,15 +1,15 @@
-mutable struct AddressInfo{VT<:Vector}
+struct QuilAddress{VT<:Vector}
     address_map::VT
 end
 
-Base.copy(info::AddressInfo) = AddressInfo(info.address_map)
+Base.copy(info::QuilAddress) = QuilAddress(info.address_map)
 
 function Base.show(io::IO, ::MIME"quil", blk::AbstractBlock)
     qcode = quil(blk)
     println(io, qcode)
 end
-quil(blk::AbstractBlock, N::Union{Nothing, Int}=nothing) = quil(blk, AddressInfo(collect(1:(N isa Nothing ? nqubits(blk) : N))))
-quil(blk::Union{Diff, CachedBlock}, info::AddressInfo) = quil(blk |> parent, info)
+quil(blk::AbstractBlock, N::Union{Nothing, Int}=nothing) = quil(blk, QuilAddress(collect(1:(N isa Nothing ? nqubits(blk) : N))))
+quil(blk::CachedBlock, info::QuilAddress) = quil(content(blk), info)
 
 ######################## Basic Buiding Blocks ########################
 const BASIC_GATES = [:X, :Y, :Z, :H, :S, :Sdag, :T, :Tdag, :SWAP, :CNOT]
@@ -20,12 +20,12 @@ args2str(pcounts) = join(["p$i" for i=pcounts], ", ")
 # place an operator on some location
 import Base: >, /
 >(gate::String, locs) = gate * " " * locs2str(locs)
-/(locs, info::AddressInfo) = [info.address_map[loc] for loc in locs]
+/(locs, info::QuilAddress) = [info.address_map[loc] for loc in locs]
 
-function quil(blk::Measure{N,K,ComputationalBasis}, info::AddressInfo) where {N, K}
-    if !(blk.collapseto isa Nothing)
-        return "MEASURE_AND_RESET($(blk.val))" > info.address_map[blk.locations]
-    elseif !(blk.remove)
+function quil(blk::Measure{N,K,ComputationalBasis}, info::QuilAddress) where {N, K}
+    if blk.postprocess isa ResetTo
+        return "MEASURE_AND_RESET($(blk.postprocess.x))" > info.address_map[blk.locations]
+    elseif blk.postprocess isa NoPostProcess
         if N == K
             locs = 1:N
         else
@@ -36,8 +36,8 @@ function quil(blk::Measure{N,K,ComputationalBasis}, info::AddressInfo) where {N,
         error("unable to parse $blk")
     end
 end
-quil(blk::PutBlock, info::AddressInfo) = quil(content(blk), info) > blk.locs/info
-function quil(blk::Union{KronBlock, PauliString}, info::AddressInfo)
+quil(blk::PutBlock, info::QuilAddress) = quil(content(blk), info) > blk.locs/info
+function quil(blk::Union{KronBlock, PauliString}, info::QuilAddress)
     locs = blk isa PauliString ? (1:nqubits(blk)) : blk.locs
     qs = String[]
     for (g, loc) in zip(subblocks(blk), locs)
@@ -47,30 +47,30 @@ function quil(blk::Union{KronBlock, PauliString}, info::AddressInfo)
     end
     join(qs, "\n")
 end
-quil(blk::RepeatedBlock, info::AddressInfo) = join([quil(content(blk), info) > loc/info for loc in blk.locs], "\n")
+quil(blk::RepeatedBlock, info::QuilAddress) = join([quil(content(blk), info) > loc/info for loc in blk.locs], "\n")
 
 for G in BASIC_GATES
     GT = Symbol(G, :Gate)
     g = G |> String
-    @eval quil(blk::$GT, info::AddressInfo) = "$($g)"
+    @eval quil(blk::$GT, info::QuilAddress) = "$($g)"
 end
-quil(blk::I2Gate, info::AddressInfo) = "I"
+quil(blk::I2Gate, info::QuilAddress) = "I"
 
-quil(blk::RotationGate{N,T}, info::AddressInfo) where {N,T} = "R$(quil(content(blk), info))($(blk.theta))"
-quil(blk::RotationGate{N,T,G}, info::AddressInfo) where {N,T,G<:SWAPGate} = "P$(quil(content(blk), info))($(blk.theta))"  # @
-quil(blk::ShiftGate, info::AddressInfo) = "PHASE($(blk.theta))"
+quil(blk::RotationGate{N,T}, info::QuilAddress) where {N,T} = "R$(quil(content(blk), info))($(blk.theta))"
+quil(blk::RotationGate{N,T,G}, info::QuilAddress) where {N,T,G<:SWAPGate} = "P$(quil(content(blk), info))($(blk.theta))"  # @
+quil(blk::ShiftGate, info::QuilAddress) = "PHASE($(blk.theta))"
 _cstring(blk::ControlBlock) = prod(v==1 ? "C" : "¬C" for v in blk.ctrl_config)
-function quil(blk::ControlBlock, info::AddressInfo)
+function quil(blk::ControlBlock, info::QuilAddress)
     _cstring(blk) * quil(content(blk), info) > (blk.ctrl_locs..., blk.locs...)/info
 end
-quil(blk::ControlBlock{<:Any, <:XGate}, info::AddressInfo) = _cstring(blk) * "NOT" > (blk.ctrl_locs..., blk.locs...)/info  # @
-function quil(blk::Concentrator, info::AddressInfo)
+quil(blk::ControlBlock{<:Any, <:XGate}, info::QuilAddress) = _cstring(blk) * "NOT" > (blk.ctrl_locs..., blk.locs...)/info  # @
+function quil(blk::Subroutine, info::QuilAddress)
     info = copy(info)
-    info.address_map = info.address_map[[blk.locs...]]
-    quil(content(blk), info)
+    subinfo = QuilAddress(info.address_map[[blk.locs...]])
+    quil(content(blk), subinfo)
 end
 
-function quil(blk::Union{ChainBlock, Sequential}, info::AddressInfo)
+function quil(blk::ChainBlock, info::QuilAddress)
     join([quil(b, info) for b in subblocks(blk)], "\n")
 end
 
