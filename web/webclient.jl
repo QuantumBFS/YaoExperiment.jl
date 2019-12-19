@@ -1,7 +1,7 @@
 using WebSockets
 
 const IP = "0.0.0.0"
-const PORT = 13254
+const PORT = 8000
 const KEY = "12345678"
 
 function do_auth_res(data)
