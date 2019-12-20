@@ -28,6 +28,7 @@ function yaorepl(repl = nothing, terminal = nothing)
     panel = LineEdit.Prompt("yao> ";
         prompt_prefix = () -> normal_prefix,
         prompt_suffix = Base.text_colors[:normal],
+        complete = REPL.REPLCompletionProvider(),
         on_enter = s->true)
 
     panel.hist = REPL.REPLHistoryProvider(Dict{Symbol,Any}(:debug => panel))
