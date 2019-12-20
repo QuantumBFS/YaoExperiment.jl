@@ -1,11 +1,11 @@
 module YaoExperiment
 using Yao, YaoExtensions
 using Yao.ConstGate
-using LuxurySparse
 
 export gatecount, gatetime
-export quil
+export quil, yaorepl
 
+include("repl/repl.jl")
 include("quil.jl")
 
 end # module

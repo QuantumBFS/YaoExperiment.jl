@@ -55,7 +55,7 @@ end
     # chain
     @test quil(chain(put(3,1=>Z), put(3, 2=>X))) == "Z 0\nX 1"
     # Concentrator
-    @test quil(concentrate(5, put(3,1=>Z), [3,4,1])) == "Z 2"
+    @test quil(subroutine(5, put(3,1=>Z), [3,4,1])) == "Z 2"
     # cache and diff
     @test quil(kron(5, 2=>X, 4=>T) |> cache) == "X 1\nT 3"
     @test quil(rot(X, 0.3)) == "RX(0.3)"
