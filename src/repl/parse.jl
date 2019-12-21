@@ -224,7 +224,7 @@ measure([op, ]reg, [nshots=n]) | m! [op] reg [nshots=n]: measure `op` without co
 end
 
 function inspect(io::IO, b::AbstractBlock)
-    Base.show(io, "text/plain", Matrix(b))
+    Base.show(io, "text/plain", mat(b))
 end
 
 function inspect(io::IO, reg::AbstractRegister)
@@ -241,4 +241,12 @@ function inspect2str(obj)
     io = IOBuffer()
     inspect(io, obj)
     String(take!(io))
+end
+
+function yaorepl_handler(str::AbstractString, state)
+    if length(strip(str)) >=2 && strip(str)[1:2] == "c "
+        string(yaorepl_trans(yaorepl_parse(str[3:end]), state))
+    else
+        yaorepl_execute(yaorepl_trans(yaorepl_parse(str), state), state)
+    end
 end

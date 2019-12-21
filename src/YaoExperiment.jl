@@ -7,5 +7,6 @@ export quil, yaorepl
 
 include("repl/repl.jl")
 include("quil.jl")
+include("webserver.jl")
 
 end # module

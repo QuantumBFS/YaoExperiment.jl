@@ -57,6 +57,7 @@ function yaorepl(repl = nothing, terminal = nothing)
             msg = yaorepl_handler(command, state)
             if msg isa AbstractString
                 println(msg)
+                println()
             end
         catch err
             Base.display_error(err)
@@ -68,12 +69,4 @@ function yaorepl(repl = nothing, terminal = nothing)
 
     REPL.run_interface(terminal, LineEdit.ModalInterface([panel,search_prompt]))
     return state
-end
-
-function yaorepl_handler(str::AbstractString, state)
-    if length(strip(str)) >=2 && strip(str)[1:2] == "c "
-        string(yaorepl_trans(yaorepl_parse(str[3:end]), state))
-    else
-        yaorepl_execute(yaorepl_trans(yaorepl_parse(str), state), state)
-    end
 end

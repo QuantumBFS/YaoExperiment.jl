@@ -3,29 +3,41 @@ using Sockets
 using WebSockets
 import WebSockets.handle
 
-function coroutine(ws)
+export run_server, naive_handler
+
+struct YaoWSInfo
+    LOCALIP
+    PORT
+    state
+end
+
+function coroutine(ws, state)
     while isopen(ws)
         data, = readguarded(ws)
         s = String(data)
-        if s == ""
+        println("Received: ", s)
+        if strip(s) == "q"
             writeguarded(ws, "Goodbye!")
             break
         end
-        println("Received: ", s)
-        writeguarded(ws, "Hello! Send empty message to exit, or just leave.")
+        try
+            msg = yaorepl_handler(s, state)
+            writeguarded(ws, string(msg))
+        catch err
+            writeguarded(ws, string(err))
+        end
     end
 end
 
-function gatekeeper(req, ws)
+function gatekeeper(req, ws, info)
+    @show ws
     orig = WebSockets.origin(req)
     println("\nOrigin:", orig, "    Target:", target(req), "    subprotocol:", subprotocol(req))
-    if occursin(LOCALIP, orig)
-        coroutine(ws)
-    elseif orig == ""
-        @info "Non-browser clients don't send Origin. We liberally accept the update request in this case."
-        coroutine(ws)
+    if occursin(info.LOCALIP, orig)
+        coroutine(ws, info.state)
     else
-        @warn "Inacceptable request"
+        @info "Non-browser clients don't send Origin. We liberally accept the update request in this case."
+        coroutine(ws, info.state)
     end
 end
 
@@ -35,13 +47,13 @@ function run_server(handler;
     )
     @info("Browser > $LOCALIP:$PORT , F12> console > ws = new WebSocket(\"ws://$LOCALIP:$PORT\") ")
 
-    handler_wrap = WebSockets.RequestHandlerFunction(req->handler(req,
-                                        Dict(:LOCALIP=>LOCALIP, :PORT=>PORT)))
+    info = YaoWSInfo(LOCALIP, PORT, YaoREPLState())
+    handler_wrap = WebSockets.RequestHandlerFunction(req->handler(req, info))
     SERVER = Sockets.listen(Sockets.InetAddr(parse(IPAddr, LOCALIP), PORT))
     @async try
         WebSockets.HTTP.listen(LOCALIP, PORT, server = SERVER, readtimeout = 0 ) do http
             if WebSockets.is_upgrade(http.message)
-                WebSockets.upgrade(gatekeeper, http)
+                WebSockets.upgrade((req, ws)->gatekeeper(req, ws, info), http)
             else
                 handle(handler_wrap, http)
             end
@@ -55,19 +67,17 @@ function run_server(handler;
     return SERVER
 end
 
-function handler(req, info)
+function naive_handler(req, info)
     BAREHTML = "<head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">
     <title>Empty.html</title></head><body></body></html>"
 
-    LOCALIP = info[:LOCALIP]
-    PORT = info[:PORT]
+    LOCALIP = info.LOCALIP
+    PORT = info.PORT
     BODY =  "<body><p>Press F12
                 <p>ws = new WebSocket(\"ws://$LOCALIP:$PORT\")
                 <p>ws.onmessage = function(e){console.log(e.data)}
-                <p>ws.send(\"$req\")
+                <p>ws.send(\"hello!\")
                 </body>"
 
     replace(BAREHTML, "<body></body>" => BODY) |> WebSockets.Response
 end
-
-server = run_server(handler)
