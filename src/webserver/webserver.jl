@@ -35,7 +35,6 @@ end
 function gatekeeper(req, ws, info)
     orig = WebSockets.origin(req)
     println("\nOrigin:", orig, "    Target:", target(req), "    subprotocol:", subprotocol(req))
-    @show dump(ws), dump(req)
     if occursin(info.LOCALIP, orig)
         coroutine(ws)
     else
