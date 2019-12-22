@@ -21,6 +21,13 @@ yao> download_tensornetwork()
 yao> reset()
 """
 
+const WEBCONFIG = Dict{Symbol, Any}(
+    :maxn_dense => 10,
+    :maxn_sparse => 15,
+    :PORT => 8080,
+    :LOCALIP => string(Sockets.getipaddr()),
+)
+
 mutable struct YaoWSState
     block::ChainBlock
     parseinfo::YaoBlocks.ParseInfo
@@ -50,14 +57,18 @@ function setnbits!(n::Int, state::YaoWSState)
     "circuit reseted, qubit number is set to $n"
 end
 
-function download(::Val{:dense}, b::AbstractBlock)
+function download(::Val{:dense}, b::AbstractBlock{N}) where N
+    nmax = WEBCONFIG[:maxn_dense]
+    N > nmax && return "Error: circuit size too large to get dense matrix, should be <= $nmax"
     io = IOBuffer()
     writedlm(io, Matrix(b))
     data = String(take!(io))
     return "download::yao-dense.dat::$data"
 end
 
-function download(::Val{:coo}, b::AbstractBlock)
+function download(::Val{:coo}, b::AbstractBlock{N}) where N
+    nmax = WEBCONFIG[:maxn_sparse]
+    N > nmax && return "Error: circuit size too large to get sparse matrix, should be <= $nmax"
     data = join([join((i,j,v), "  ") for (i,j,v) in zip(LuxurySparse.findnz(mat(b))...)], "\n")
     return "download::yao-sparse-coo.dat::$data"
 end

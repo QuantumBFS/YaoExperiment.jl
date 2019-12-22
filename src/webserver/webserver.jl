@@ -8,11 +8,6 @@ export run_server, naive_handler
 
 include("webparse.jl")
 
-struct YaoWSInfo
-    LOCALIP
-    PORT
-end
-
 function coroutine(ws)
     state = YaoWSState()
     while isopen(ws)
@@ -32,11 +27,11 @@ function coroutine(ws)
     end
 end
 
-function gatekeeper(req, ws, info)
+function gatekeeper(req, ws)
     orig = WebSockets.origin(req)
     println("\nOrigin:", orig, "    Target:", target(req), "    subprotocol:", subprotocol(req))
     @show dump(ws), dump(req)
-    if occursin(info.LOCALIP, orig)
+    if occursin(WEBCONFIG[:LOCALIP], orig)
         coroutine(ws)
     else
         @info "Non-browser clients don't send Origin. We liberally accept the update request in this case."
@@ -44,19 +39,17 @@ function gatekeeper(req, ws, info)
     end
 end
 
-function run_server(handler;
-    LOCALIP = string(Sockets.getipaddr()),
-    PORT::Int=8080,
-    )
+function run_server(handler)
+    LOCALIP = WEBCONFIG[:LOCALIP]
+    PORT = WEBCONFIG[:PORT]
     @info("Browser > $LOCALIP:$PORT , F12> console > ws = new WebSocket(\"ws://$LOCALIP:$PORT\") ")
 
-    info = YaoWSInfo(LOCALIP, PORT)
-    handler_wrap = WebSockets.RequestHandlerFunction(req->handler(req, info))
+    handler_wrap = WebSockets.RequestHandlerFunction(req->handler(req))
     SERVER = Sockets.listen(Sockets.InetAddr(parse(IPAddr, LOCALIP), PORT))
     @async try
         WebSockets.HTTP.listen(LOCALIP, PORT, server = SERVER, readtimeout = 0 ) do http
             if WebSockets.is_upgrade(http.message)
-                WebSockets.upgrade((req, ws)->gatekeeper(req, ws, info), http)
+                WebSockets.upgrade((req, ws)->gatekeeper(req, ws), http)
             else
                 handle(handler_wrap, http)
             end
@@ -70,12 +63,12 @@ function run_server(handler;
     return SERVER
 end
 
-function naive_handler(req, info)
+function naive_handler(req)
     BAREHTML = "<head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">
     <title>Empty.html</title></head><body></body></html>"
 
-    LOCALIP = info.LOCALIP
-    PORT = info.PORT
+    LOCALIP = WEBCONFIG[:LOCALIP]
+    PORT = WEBCONFIG[:PORT]
     BODY =  "<body><p>Press F12
                 <p>ws = new WebSocket(\"ws://$LOCALIP:$PORT\")
                 <p>ws.onmessage = function(e){console.log(e.data)}
