@@ -16,16 +16,16 @@
               grid-column-start: 2;
             }
         </style>
-      
+
         <script type = "text/javascript">
             // Let us open a web socket
-            var ws = new WebSocket("ws://69.171.73.23:8080");
-            
+            var ws = new WebSocket("ws://192.168.31.90:8080");
+
             if ("WebSocket" in window) {
                 ws.onopen = function() {
                 };
-                
-                ws.onmessage = function (evt) { 
+
+                ws.onmessage = function (evt) {
                     console.log(evt.data)
                     if (evt.data === null){
                     }
@@ -46,13 +46,13 @@
                         document.getElementById("yao-display").value = evt.data;
                     };
                 };
-                
-                ws.onclose = function() { 
+
+                ws.onclose = function() {
                     // websocket is closed.
-                    alert("Connection closed, Press `F5` to refresh this page."); 
+                    alert("Connection closed, Press `F5` to refresh this page.");
                 };
             } else {
-          
+
                 // The browser doesn't support WebSocket
                 alert("WebSocket NOT supported by your Browser!");
             }
@@ -101,9 +101,9 @@
                 document.body.removeChild(element);
             }
         </script>
-		
+
     </head>
-   
+
     <body>
         <h2>
         Yao QBIR

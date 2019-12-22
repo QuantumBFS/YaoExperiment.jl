@@ -11,10 +11,10 @@ include("webparse.jl")
 struct YaoWSInfo
     LOCALIP
     PORT
-    state
 end
 
-function coroutine(ws, state)
+function coroutine(ws)
+    state = YaoWSState()
     while isopen(ws)
         data, = readguarded(ws)
         s = String(data)
@@ -35,11 +35,12 @@ end
 function gatekeeper(req, ws, info)
     orig = WebSockets.origin(req)
     println("\nOrigin:", orig, "    Target:", target(req), "    subprotocol:", subprotocol(req))
+    @show dump(ws), dump(req)
     if occursin(info.LOCALIP, orig)
-        coroutine(ws, info.state)
+        coroutine(ws)
     else
         @info "Non-browser clients don't send Origin. We liberally accept the update request in this case."
-        coroutine(ws, info.state)
+        coroutine(ws)
     end
 end
 
@@ -49,7 +50,7 @@ function run_server(handler;
     )
     @info("Browser > $LOCALIP:$PORT , F12> console > ws = new WebSocket(\"ws://$LOCALIP:$PORT\") ")
 
-    info = YaoWSInfo(LOCALIP, PORT, YaoWSState())
+    info = YaoWSInfo(LOCALIP, PORT)
     handler_wrap = WebSockets.RequestHandlerFunction(req->handler(req, info))
     SERVER = Sockets.listen(Sockets.InetAddr(parse(IPAddr, LOCALIP), PORT))
     @async try
