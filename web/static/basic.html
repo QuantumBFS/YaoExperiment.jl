@@ -2,6 +2,20 @@
 
 <html>
     <head>
+        <style>
+            dl {
+              display: grid;
+              grid-template-columns: max-content auto;
+            }
+
+            dt {
+              grid-column-start: 1;
+            }
+
+            dd {
+              grid-column-start: 2;
+            }
+        </style>
       
         <script type = "text/javascript">
             // Let us open a web socket
@@ -12,11 +26,21 @@
                 };
                 
                 ws.onmessage = function (evt) { 
+                    console.log(evt.data)
                     if (evt.data === null){
                     }
-                    else if evt.data.startWith("redirect: "){
-                        win = window.open(evt.data.slice(10), '_blank');
-                        win.focus();
+                    else if (evt.data.startsWith("download::")){
+                        //win = window.open(evt.data.slice(10), '_blank');
+                        //win.focus();
+                        var dfd = evt.data.split("::")
+                        if (dfd.length == 3){
+                            download(dfd[1], dfd[2]);
+                        }
+                        else if (dfd.length==5){ // tensornetwork format!
+                            download(dfd[1]+".tensors.dat", dfd[2]);
+                            download(dfd[1]+".sizes.dat", dfd[3]);
+                            download(dfd[1]+".labels.dat", dfd[4]);
+                        };
                     }
                     else{
                         document.getElementById("yao-display").value = evt.data;
@@ -64,6 +88,18 @@
                 return true;
             }
 
+            function download(filename, text) {
+                var element = document.createElement('a');
+                element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+                element.setAttribute('download', filename);
+
+                element.style.display = 'none';
+                document.body.appendChild(element);
+
+                element.click();
+
+                document.body.removeChild(element);
+            }
         </script>
 		
     </head>
@@ -72,15 +108,20 @@
         <h2>
         Yao QBIR
         </h2>
-        <ul>
-            <li>p: print variable</li>
-            <li>ctrl-enter: send instruction</li>
-        </ul>
+        <dl>
+            <dt>loc => b</dt><dd>put gate `b` on location `loc`</dd>
+            <dt>loc => b'</dt><dd>put daggered `b` on location `loc`</dd>
+            <dt>begin ... end</dt><dd>put a sequence of gate</dd>
+            <dt>rot(X, 0.5)</dt><dd>put a rotation gate</dd>
+            <dt>rot(X, :angle)</dt><dd>put a rotation gate (symbolic)</dd>
+            <dt>5=>C, 3=>Y</dt><dd>put a control gate</dd>
+            <dt> ... </dt><dd>see the `parse_ex` function defined in <a href="https://github.com/QuantumBFS/YaoBlocks.jl/blob/master/src/treeutils/load.jl#L60">YaoBlocks</a></dd>
+        </dl>
         <p>
-        Number of qubits: <input onchange="onqubitchange()" type="number" min="1" id="input-nbits" max="60">
+        Number of qubits (will reset circuit!): <input onchange="onqubitchange()" type="number" min="1" id="input-nbits" max="60">
         </p>
         <div>
-        <textarea onkeypress="ontextchange()" style="width:500px" placeholder="send instruction here, `h` for help." id="yaoinstruct"></textarea>
+            <textarea onkeypress="ontextchange()" style="width:500px" placeholder="<Ctrl> + <Enter> to send the instruction." id="yaoinstruct"></textarea>
         </div>
 
         <div>
@@ -88,7 +129,7 @@
         <button onclick="sendtext()">send</button>
         </div>
         <div>
-        <textarea disabled style="height:500px; width:500px" id="yao-display"></textarea>
+        <textarea disabled style="height:300px; width:500px" id="yao-display"></textarea>
         </div>
         <h4>
         Download

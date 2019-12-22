@@ -1,13 +1,13 @@
 # A Using Case:
 """
-yao> nqubits(4)
+yao> nbits(4)
 
 yao> cc = begin
     2 => X
     3 => C, 1=>C, 4=>X
 end
 
-yao> nqubits(6)
+yao> nbits(6)
 
 yao> dc = begin
     subroutine(1,5,2,3) cc
@@ -54,7 +54,7 @@ CmdTable = Dict(
     'm'=>"measure",
     # interactive command
     'l'=>"listvars",
-    'h'=>"help",
+    'h'=>"help_repl",
 )
 
 struct YaoREPLState
@@ -63,6 +63,17 @@ struct YaoREPLState
     parseinfo::YaoBlocks.ParseInfo
 end
 YaoREPLState() = YaoREPLState(Dict{Symbol,Any}(), Dict{Symbol,Any}(), YaoBlocks.ParseInfo(-1, ""))
+
+function _checkfunc(f)
+    sf = string(f)
+    if sf in values(CmdTable)
+        return f
+    elseif sf[end] == '!' && sf[1:end-1] in values(CmdTable)
+        return f
+    else
+        error("Expression `$f` can not be parsed to a known function!")
+    end
+end
 
 """
 expand shortcuts.
@@ -77,28 +88,6 @@ function yaorepl_parse(str)
     end
     Meta.parse(str)
 end
-
-const max_repl_nbit = Ref(20)
-const max_repl_nbatch = Ref(128)
-const max_repl_nshots = Ref(128)
-
-_checkbit(x::Int) = x <= max_repl_nbit[] ? x : error("maximum number of qubits is $(max_repl_nbit[]), got $x.")
-_checkbit(x::String) = (_checkbit(length(x)); x)
-_checkbatch(x::Int) = x <= max_repl_nbatch[] ? x : error("maximum number of nbatch is $(max_repl_nbatch[]), got $x.")
-_checkshots(x::Int) = x <= max_repl_nshots[] ? x : error("maximum number of nshots is $(max_repl_nshots[]), got $x.")
-function _checkfunc(f)
-    sf = string(f)
-    if sf in values(CmdTable)
-        return f
-    elseif sf[end] == '!' && sf[1:end-1] in values(CmdTable)
-        return f
-    else
-        error("Expression `$f` can not be parsed to a known function!")
-    end
-end
-
-_checkreg(a::Symbol) = a
-_checkop(a::Symbol) = a
 
 yaorepl_trans(ex, state) = @match ex begin
     :($x = zero_state($nbit, nbatch=$nbatch)) => :($x = zero_state($(_checkbit(nbit)), nbatch=$(_checkbatch(nbatch))))
@@ -129,7 +118,7 @@ yaorepl_trans(ex, state) = @match ex begin
     :(inspect($a)) => :(inspect2str($(_checkreg(a))))
     :($x |> $y) => :(apply!($x, $y))
 
-    :(help()) => :(help())
+    :(help_repl()) => :(help_repl())
     :(listvars()) => :(listvars($state))
     :(nbits($n)) => :(setnbits!($n, $state))
     :(nbits()) => :(getnbits($state))
@@ -151,7 +140,7 @@ function yaorepl_execute(ex, state)
         end
         :($f($(args...))) => begin
             nargs = [query_state(state, arg) for arg in args]
-            res = eval(:($f($(nargs...))))
+            res = eval(:($(_checkfunc(f))($(nargs...))))
             if res isa AbstractString
                 res
             elseif res isa Nothing
@@ -187,20 +176,11 @@ function listvars(state)
     join(["current nbits = $(state.parseinfo.nbit)\n", "=== registers ===", regstr..., "\n=== blocks ===", blkstr...], "\n")
 end
 
-function setnbits!(n::Int, state)
-    state.parseinfo.nbit = Int(n)
-    "qubit number is set to $n"
-end
-
-function getnbits(state)
-    "qubit number is to $(state.parseinfo.nbit)"
-end
-
-function help()
+function help_repl()
 """Guide:
 === Basic ===
 q: quit
-help() | h: print this manual
+help_repl() | h: print this manual
 c cmd: show the julia code of an expression
 listvars() | l: list defined register/block table
 nbits(n): set the number of qubits to `n` (used in defining a block)
@@ -221,26 +201,6 @@ measure!([op, ]reg) | m! [op] reg: measure `op` inplace.
 measure([op, ]reg, [nshots=n]) | m! [op] reg [nshots=n]: measure `op` without collapsing `reg`.
 
 * Note: `n` is integer, `cmd` is command, `reg` is register, `op` is operator or gate (block)."""
-end
-
-function inspect(io::IO, b::AbstractBlock)
-    Base.show(io, "text/plain", mat(b))
-end
-
-function inspect(io::IO, reg::AbstractRegister)
-    Base.show(io, "text/plain", statevec(reg))
-end
-
-function print2str(obj)
-    io = IOBuffer()
-    print(io, obj)
-    String(take!(io))
-end
-
-function inspect2str(obj)
-    io = IOBuffer()
-    inspect(io, obj)
-    String(take!(io))
 end
 
 function yaorepl_handler(str::AbstractString, state)

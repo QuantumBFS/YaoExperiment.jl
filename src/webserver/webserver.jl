@@ -1,9 +1,12 @@
 # Minimal server using the 'listen' syntax, starting with the 'inner' functions
 using Sockets
 using WebSockets
+using DelimitedFiles, LuxurySparse
 import WebSockets.handle
 
 export run_server, naive_handler
+
+include("webparse.jl")
 
 struct YaoWSInfo
     LOCALIP
@@ -21,7 +24,7 @@ function coroutine(ws, state)
             break
         end
         try
-            msg = yaorepl_handler(s, state)
+            msg = yaoweb_handler(s, state)
             writeguarded(ws, string(msg))
         catch err
             writeguarded(ws, string(err))
@@ -30,7 +33,6 @@ function coroutine(ws, state)
 end
 
 function gatekeeper(req, ws, info)
-    @show ws
     orig = WebSockets.origin(req)
     println("\nOrigin:", orig, "    Target:", target(req), "    subprotocol:", subprotocol(req))
     if occursin(info.LOCALIP, orig)
@@ -47,7 +49,7 @@ function run_server(handler;
     )
     @info("Browser > $LOCALIP:$PORT , F12> console > ws = new WebSocket(\"ws://$LOCALIP:$PORT\") ")
 
-    info = YaoWSInfo(LOCALIP, PORT, YaoREPLState())
+    info = YaoWSInfo(LOCALIP, PORT, YaoWSState())
     handler_wrap = WebSockets.RequestHandlerFunction(req->handler(req, info))
     SERVER = Sockets.listen(Sockets.InetAddr(parse(IPAddr, LOCALIP), PORT))
     @async try
